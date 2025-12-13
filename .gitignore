@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+venv/
+.env
+.env.local
+
+# Editor
+.vscode/
+.DS_Store
+
+# Byte-compiled / distribution
+dist/
+build/
