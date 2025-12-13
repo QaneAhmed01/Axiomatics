@@ -3,17 +3,17 @@ from typing import Dict, Any
 
 def validate_openapi_spec(spec_dict):
     try:
-        validate_spec(spec_dict)  
-        return True, None
+        validate_spec(spec_dict) #Running the OpenAPI validation
+        return True, None 
     except Exception as e:
         return False, str(e)
     
 def mcp_validate_tool(context: Dict[str, Any]) -> Dict[str, Any]:
-    spec = context["spec"]
-    valid, err = validate_openapi_spec(spec)
+    spec = context["spec"] #Reading the spec from MCP context
+    valid, err = validate_openapi_spec(spec) #Validating it
     result = {
         "valid": valid,
         "errors": err,
     }
-    context["validation"] = result
+    context["validation"] = result #Storing the results back to context
     return result

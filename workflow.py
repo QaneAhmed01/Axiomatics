@@ -6,21 +6,30 @@ from rich import print
 import json
 from typing import Dict
 
+def is_api_request(text: str) -> bool: 
+    t=text.lower() #Making it lowercase for easier matching
+    keywords = ["api", "endpoint", "endpoints", "openapi", "swagger", "rest"]
+    return any(k in t for k in keywords) #Looking if it is related to API 
+
 class Workflow:
     def __init__(self, llm_client: LLMClient):
         self.llm = llm_client
         self.agent = DesignerAgent(self.llm)
 
     def run_interactive(self, user_request: str, out_yaml: str = "openapi_generated.yaml"):
+        if not is_api_request(user_request):
+            print("[bold red]This tool only supports REST API design.[/]")
+            print("Only describe API's you want to make(ex. 'An API to manage student grades').")
+            return #Rejecting non API requests
         print("[bold green]1) Requesting initial design from agent...[/]")
-        proposal = self.agent.propose(user_request)
+        proposal = self.agent.propose(user_request) #Here we get the design proposal from the agent
         print("[bold]Agent proposal (raw):[/]")
         print(json.dumps(proposal, indent=2))
 
         print("\n[bold cyan]Review the proposal. You can: [enter] to accept, 'edit' to modify JSON, or 'reject' to abort.[/]")
-        choice = input("Choice (accept/edit/reject): ").strip().lower()
+        choice = input("Choice (accept/edit/reject): ").strip().lower() #Read the user decision
         if choice == "accept":
-            final = proposal
+            final = proposal 
         elif choice == "edit":
             print("Paste the entire JSON proposal (single line or multiline). End input with a blank line.")
             lines = []
@@ -36,14 +45,14 @@ class Workflow:
             print("Aborted by user.")
             return
 
-        spec = build_openapi(final, title=f"{user_request} API")
-        save_spec_yaml(spec, out_yaml)
+        spec = build_openapi(final, title=f"{user_request} API")# Build the OpenAPI spec from the final design
+        save_spec_yaml(spec, out_yaml) #Save it to the YAML file
         print(f"[bold]Saved tentative spec to {out_yaml}[/]")
  
         context: Dict = {
-            "spec": spec,
-            "user_request": user_request,
-            "validation": None,
+            "spec": spec, #The OpenAPI spec
+            "user_request": user_request, # The original user request
+            "validation": None, # Validation results will go here
         }
 
         iteration = 0
@@ -56,13 +65,13 @@ class Workflow:
 
             if valid:
                 print(f"[bold green]Spec is valid (after {iteration} validation step(s)).[/]")
-                save_spec_yaml(spec, out_yaml)
+                save_spec_yaml(context["spec"], out_yaml) # Save the valid spec
                 break
             else:
                 print(f"[bold red]Validation failed (iteration {iteration}):[/]")
-                print(err)
-                fix_prompt = f"""The OpenAPI spec failed validation with the following error:\n{err}\n\nHere is the current spec JSON:\n{json.dumps(spec, indent=2)}\n\nPlease produce a corrected OpenAPI 3.0 JSON (only JSON) that fixes the errors. Keep the same endpoints and schemas unless necessary."""
-                corrected_raw = self.llm.generate("", fix_prompt, temperature=0.0)
+                print(err) #Print the validation errors to the user
+                fix_prompt = f"""The OpenAPI spec failed validation with the following error:\n{err}\n\nHere is the current spec JSON:\n{json.dumps(context["spec"], indent=2)}\n\nPlease produce a corrected OpenAPI 3.0 JSON (only JSON) that fixes the errors. Keep the same endpoints and schemas unless necessary."""
+                corrected_raw = self.llm.generate("", fix_prompt, temperature=0.0) #Askign the LLM to fix the spec
                 try:
                     corrected = json.loads(corrected_raw)
                 except Exception:
@@ -73,20 +82,6 @@ class Workflow:
                         corrected = json.loads(s[start:end+1])
                     else:
                         raise RuntimeError("LLM did not return valid JSON spec.")
-                spec = corrected
-                save_spec_yaml(spec, out_yaml)
+                context["spec"] = corrected #Update spec in the MCP context
+                save_spec_yaml(context["spec"], out_yaml) #Save the corrected spec
                 print(f"[yellow]Wrote corrected spec to {out_yaml}. Re-validating...[/]")
-
-# ===== Top-level script to run workflow =====
-if __name__ == "__main__":
-    # Initialize LLM client
-    llm = LLMClient(provider="openai", model="gpt-4o-mini")
-
-    # Create workflow
-    wf = Workflow(llm)
-
-    # Ask user for a prompt
-    user_request = input("Describe the API you want to generate: ")
-
-    # Run interactive workflow
-    wf.run_interactive(user_request)
