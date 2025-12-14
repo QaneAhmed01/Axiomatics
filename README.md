@@ -52,15 +52,15 @@ The HITL logic was tested by just manually interacting with and observing the CL
 - If the user chose to edit the JSON proposal from the agent  it was observed if it accepted a correctly formatted JSON and replaced the agents suggestion.
 - Lastly check if the MCP context structure updated correctly after each step (proposal -> spec -> validation).
 
-  ### Validation and Iteration Testing
-  To verify that the program was able to handle errors and and iterative refinement, several tests were made:
+### Validation and Iteration Testing
+To verify that the program was able to handle errors and and iterative refinement, several tests were made:
 - Providing prompts that intentionally produced invalid OpenAPI specs such as "Hello world".
 - Confirming that the OpenAPI validator detected issues and returned error messages.
 - Ensured that the system automatically created correct specs using the LLM.
 - Re ran the validation in a loop until the spec passed 100% of the checks.
  
-  ### Specification Validation
-  In this program only the integrated library 'openapi-spec-validator' that is within Python was used. This validator ensured that every generated or corrected OpenAPI document followed the OpenAPI3.0 standard.
+### Specification Validation
+In this program only the integrated library 'openapi-spec-validator' that is within Python was used. This validator ensured that every generated or corrected OpenAPI document followed the OpenAPI3.0 standard.
 
 ## How the System Prompts Guide API Design
 The project uses a system of prompts to ensure that the LLM generates consistent and valid REST API designs. The first prompt instruction is for the LLM and is made to be strict intrusctions that shape how the model should propose resources, endpoints and schemas. The system prompt makes it so the best REST practices such as using plural nouns for resources, providing the CRUD style endpoints (Create, Remove, Update and Delete) and creating JSON output only. It also made sure that the agent avoids conversational and/or irrelevant text. 
