@@ -38,8 +38,21 @@ class Workflow:
                 if line.strip() == "":
                     break
                 lines.append(line)
-            text = "\n".join(lines)
-            final = json.loads(text)
+            text = "\n".join(lines).strip()
+            try:
+                final = json.loads(text)
+            except json.JSONDecodeError:
+                start=text.find("{")
+                end=text.rfind("}")
+                if start != -1 and end != -1:
+                    try:
+                        final = json.loads(text[start:end+1])
+                    except Exception:
+                        print("[bold red]Invalid JSON. Aborted.[/]")
+                        return
+                else:
+                    print("[bold red]Invalid JSON. Aborted.[/]")
+                    return
         else:
             choice == "reject"
             print("Aborted by user.")

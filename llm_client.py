@@ -1,14 +1,16 @@
 from typing import Any, Dict, Optional
 import os
-from dotenv import load_dotenv
-from openai import OpenAI
-
-load_dotenv(".env.local") #Loading my API key from .env.local file 
 
 try:
     import openai
 except ImportError:
     openai = None #Checks if it has been installed
+from dotenv import load_dotenv
+from openai import OpenAI
+
+load_dotenv(".env.local") #Loading my API key from .env.local file 
+
+
 
 class LLMClient: 
     def __init__(self, provider:str = "openai", model: str="gpt-4o-mini"):
@@ -42,3 +44,4 @@ class LLMClient:
             return resp.choices[0].message.content #Returns the generated text from LLM
         else:
             raise NotImplementedError("provider not implemented") #Just a placeholder 
+
