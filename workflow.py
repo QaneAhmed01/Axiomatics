@@ -31,28 +31,21 @@ class Workflow:
         if choice == "accept":
             final = proposal 
         elif choice == "edit":
-            print("Paste the entire JSON proposal (single line or multiline). End input with a blank line.")
+            print("Paste the entire JSON proposal (single line or multiline). When finished, press enter on a blank line.")
             lines = []
             while True:
                 line = input()
-                if line.strip() == "":
-                    break
                 lines.append(line)
-            text = "\n".join(lines).strip()
-            try:
-                final = json.loads(text)
-            except json.JSONDecodeError:
-                start=text.find("{")
-                end=text.rfind("}")
-                if start != -1 and end != -1:
+                candidate = "\n".join(lines).strip()
+                if not candidate:
+                    continue
+                if line.strip() == "":
                     try:
-                        final = json.loads(text[start:end+1])
+                        final = parse_json_loose(candidate)
+                        break
                     except Exception:
-                        print("[bold red]Invalid JSON. Aborted.[/]")
-                        return
-                else:
-                    print("[bold red]Invalid JSON. Aborted.[/]")
-                    return
+                        print("[bold red]JSON incomplete or invalid. Continue pasting or Ctrl+C to abort.[/]")
+                        continue
         else:
             choice == "reject"
             print("Aborted by user.")
