@@ -5,7 +5,7 @@ Follow the steps below to install dependencies, configure your environment, and 
 ### 1. Clone the Repository
 
 ```bash
-git clone <your-repository-url>
+git clone <https://github.com/QaneAhmed01/Axiomatics.git>
 cd Axiomatics
 ```
 ### 2. Create a Virtural Enviroment
