@@ -6,6 +6,17 @@ from rich import print
 import json
 from typing import Dict
 
+def parse_json_loose(text: str):
+    decoder=json.JSONDecoder()
+    text=text.strip() 
+    starts = [i for i in (text.find("{"), text.find("[")) if i != -1]
+    if not starts:
+        raise ValueError("No JSON found")
+
+    start = min(starts)
+    obj, _ = decoder.raw_decode(text[start:])
+    return obj
+
 def is_api_request(text: str) -> bool: 
     t=text.lower() #Making it lowercase for easier matching
     keywords = ["api", "endpoint", "endpoints", "openapi", "swagger", "rest"]
@@ -36,9 +47,17 @@ class Workflow:
             while True:
                 line = input()
                 lines.append(line)
+<<<<<<< HEAD
                 candidate = "\n".join(lines).strip()
                 if not candidate:
                     continue
+=======
+
+                candidate = "\n".join(lines).strip()
+                if not candidate:
+                    continue
+
+>>>>>>> 222cfb1 (Fixes to edit HITL errors)
                 if line.strip() == "":
                     try:
                         final = parse_json_loose(candidate)
@@ -79,15 +98,10 @@ class Workflow:
                 fix_prompt = f"""The OpenAPI spec failed validation with the following error:\n{err}\n\nHere is the current spec JSON:\n{json.dumps(context["spec"], indent=2)}\n\nPlease produce a corrected OpenAPI 3.0 JSON (only JSON) that fixes the errors. Keep the same endpoints and schemas unless necessary."""
                 corrected_raw = self.llm.generate("", fix_prompt, temperature=0.0) #Askign the LLM to fix the spec
                 try:
-                    corrected = json.loads(corrected_raw)
-                except Exception:
-                    s = corrected_raw
-                    start = s.find("{")
-                    end = s.rfind("}")
-                    if start != -1 and end != -1:
-                        corrected = json.loads(s[start:end+1])
-                    else:
-                        raise RuntimeError("LLM did not return valid JSON spec.")
-                context["spec"] = corrected #Update spec in the MCP context
-                save_spec_yaml(context["spec"], out_yaml) #Save the corrected spec
-                print(f"[yellow]Wrote corrected spec to {out_yaml}. Re-validating...[/]")
+                    corrected = parse_json_loose(corrected_raw)
+                    context["spec"] = corrected
+                    spec = corrected
+                except Exception as e:
+                    print("[bold red]LLM did not return parsable JSON.[/]")
+
+                    raise
